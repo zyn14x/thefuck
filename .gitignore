@@ -59,5 +59,9 @@ target/
 .env
 .idea
 
+# Created by the test suite on Windows, where `os.path.expanduser` can't
+# resolve `~` once the tests clear `HOME` and `USERPROFILE`:
+~
+
 # vim temporary files
 .*.swp

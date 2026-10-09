@@ -1,5 +1,5 @@
 def test_readme(source_root):
-    with source_root.joinpath('README.md').open() as f:
+    with source_root.joinpath('README.md').open(encoding='utf-8') as f:
         readme = f.read()
 
         bundled = source_root.joinpath('thefuck') \

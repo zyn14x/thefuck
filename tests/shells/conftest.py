@@ -12,8 +12,9 @@ def isfile(mocker):
 
 
 @pytest.fixture
-@pytest.mark.usefixtures('isfile')
-def history_lines(mocker):
+def history_lines(mocker, isfile):
+    # `isfile` is requested for its side effect only: the shell classes
+    # only read the history file when `os.path.isfile` returns `True`.
     def aux(lines):
         mock = mocker.patch('io.open')
         mock.return_value.__enter__ \

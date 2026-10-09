@@ -1,0 +1,60 @@
+[build-system]
+requires = ["setuptools>=77", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "thefuck"
+version = "3.33"
+description = "Magnificent app which corrects your previous console command"
+readme = "README.md"
+requires-python = ">=3.9"
+license = "MIT"
+license-files = ["LICENSE.md"]
+authors = [
+    { name = "Vladimir Iakovlev", email = "nvbn.rm@gmail.com" },
+]
+keywords = ["shell", "console", "command", "correction"]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Environment :: Console",
+    "Intended Audience :: Developers",
+    "Intended Audience :: System Administrators",
+    "Operating System :: MacOS",
+    "Operating System :: Microsoft :: Windows",
+    "Operating System :: POSIX",
+    "Operating System :: Unix",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+    "Topic :: Software Development",
+    "Topic :: System :: Shells",
+    "Topic :: Utilities",
+]
+dependencies = [
+    "psutil",
+    "colorama",
+    "decorator",
+    "pyte",
+    "six",
+]
+
+[project.urls]
+Homepage = "https://github.com/nvbn/thefuck"
+Source = "https://github.com/nvbn/thefuck"
+
+[project.scripts]
+thefuck = "thefuck.entrypoints.main:main"
+thefuck_firstuse = "thefuck.entrypoints.not_configured:main"
+fuck = "thefuck.entrypoints.not_configured:main"
+
+[tool.setuptools]
+include-package-data = true
+script-files = ["scripts/fuck.bat", "scripts/fuck.ps1"]
+
+[tool.setuptools.packages.find]
+include = ["thefuck*"]
+exclude = ["tests*"]

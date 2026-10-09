@@ -3,9 +3,9 @@ pytest
 mock
 pytest-mock
 wheel
-setuptools>=17.1
+setuptools>=77
+build
 pexpect
-pypandoc
 pytest-benchmark
 pytest-docker-pexpect
 twine

@@ -236,6 +236,13 @@ class TestCache(object):
 
 class TestGetValidHistoryWithoutCurrent(object):
     @pytest.fixture(autouse=True)
+    def reset_memoize(self, no_memoize):
+        """`get_all_executables` is memoized globally, so a result cached by
+        another test would bypass the `Path` mock used by `bins` below.
+
+        """
+
+    @pytest.fixture(autouse=True)
     def fail_on_warning(self):
         warnings.simplefilter('error')
         yield

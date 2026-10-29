@@ -1,4 +1,5 @@
 import os
+import re
 from subprocess import Popen, PIPE
 from tempfile import gettempdir
 from uuid import uuid4
@@ -89,4 +90,12 @@ class Bash(Generic):
         """Returns the version of the current shell"""
         proc = Popen(['bash', '-c', 'echo $BASH_VERSION'],
                      stdout=PIPE, stderr=DEVNULL)
-        return proc.stdout.read().decode('utf-8').strip()
+        output = proc.stdout.read()
+        if b'\x00' in output:
+            # On Windows `bash` may resolve to the WSL launcher, which
+            # answers in UTF-16 with its own (localized) message
+            output = output.decode('utf-16-le', 'ignore')
+        else:
+            output = output.decode('utf-8', 'replace')
+        version = output.strip()
+        return version if re.match(r'^\d+(\.\d+)*', version) else ''

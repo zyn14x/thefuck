@@ -5,7 +5,6 @@ try:
     from shutil import get_terminal_size
 except ImportError:
     from backports.shutil_get_terminal_size import get_terminal_size
-import pyte
 from .. import const, logs
 
 
@@ -40,6 +39,7 @@ def _get_last_n(n):
 
 def _get_output_lines(output):
     lines = output.split('\n')
+    import pyte
     screen = pyte.Screen(get_terminal_size().columns, len(lines))
     stream = pyte.Stream(screen)
     stream.feed('\n'.join(lines))

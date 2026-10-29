@@ -7,7 +7,6 @@ try:
 except ImportError:
     from backports.shutil_get_terminal_size import get_terminal_size
 import six
-import pyte
 from ..exceptions import ScriptNotInLog
 from .. import const, logs
 
@@ -58,6 +57,7 @@ def _get_output_lines(script, log_file):
     lines = data.split('\n')
     grouped = list(_group_by_calls(lines))
     script_lines = _get_script_group_lines(grouped, script)
+    import pyte
     screen = pyte.Screen(get_terminal_size().columns, len(script_lines))
     stream = pyte.Stream(screen)
     stream.feed('\n'.join(script_lines))

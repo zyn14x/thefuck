@@ -48,26 +48,35 @@ memoize.disabled = False
 @memoize
 def which(program):
     """Returns `program` path or `None`."""
+    from ._fastwhich import which as fast_which
+    return fast_which(program)
+
+
+def _iter_path_entries(path):
+    """Yields names of the files (not directories) found in `path`."""
     try:
-        from shutil import which
+        entries = os.scandir(path)
+    except (AttributeError, OSError):
+        # Python 2 has no `os.scandir`
+        try:
+            names = os.listdir(path)
+        except OSError:
+            return
+        for name in names:
+            try:
+                if not os.path.isdir(os.path.join(path, name)):
+                    yield name
+            except OSError:
+                continue
+        return
 
-        return which(program)
-    except ImportError:
-        def is_exe(fpath):
-            return os.path.isfile(fpath) and os.access(fpath, os.X_OK)
-
-        fpath, fname = os.path.split(program)
-        if fpath:
-            if is_exe(program):
-                return program
-        else:
-            for path in os.environ["PATH"].split(os.pathsep):
-                path = path.strip('"')
-                exe_file = os.path.join(path, program)
-                if is_exe(exe_file):
-                    return exe_file
-
-        return None
+    with entries:
+        for entry in entries:
+            try:
+                if not entry.is_dir():
+                    yield entry.name
+            except OSError:
+                continue
 
 
 def default_settings(params):
@@ -112,21 +121,14 @@ def include_path_in_search(path):
 def get_all_executables():
     from thefuck.shells import shell
 
-    def _safe(fn, fallback):
-        try:
-            return fn()
-        except OSError:
-            return fallback
-
     tf_alias = get_alias()
     tf_entry_points = ['thefuck', 'fuck']
 
-    bins = [exe.name.decode('utf8') if six.PY2 else exe.name
+    bins = [name.decode('utf8') if six.PY2 else name
             for path in os.environ.get('PATH', '').split(os.pathsep)
             if include_path_in_search(path)
-            for exe in _safe(lambda: list(Path(path).iterdir()), [])
-            if not _safe(exe.is_dir, True)
-            and exe.name not in tf_entry_points]
+            for name in _iter_path_entries(path)
+            if name not in tf_entry_points]
     aliases = [alias.decode('utf8') if six.PY2 else alias
                for alias in shell.get_aliases() if alias != tf_alias]
 
@@ -296,13 +298,18 @@ cache.disabled = False
 
 def get_installation_version():
     try:
-        from importlib.metadata import version
-
-        return version('thefuck')
+        from importlib.metadata import PackageNotFoundError, version
     except ImportError:
+        # Python < 3.8
         import pkg_resources
 
         return pkg_resources.require('thefuck')[0].version
+
+    try:
+        return version('thefuck')
+    except PackageNotFoundError:
+        # Running from an uninstalled source checkout
+        return 'unknown'
 
 
 def get_alias():

@@ -89,9 +89,10 @@ def os_environ_pathsep(monkeypatch, path, pathsep):
     ('/foo:/bar:/baz:/foo/bar', ':'),
     (r'C:\\foo;C:\\bar;C:\\baz;C:\\foo\\bar', ';')])
 def test_get_all_executables_pathsep(path, pathsep):
-    with patch('thefuck.utils.Path') as Path_mock:
+    with patch('thefuck.utils.os.scandir', side_effect=OSError) as scandir_mock:
         get_all_executables()
-        Path_mock.assert_has_calls([call(p) for p in path.split(pathsep)], True)
+        scandir_mock.assert_has_calls(
+            [call(p) for p in path.split(pathsep)], True)
 
 
 @pytest.mark.usefixtures('no_memoize', 'os_environ_pathsep')
@@ -101,11 +102,11 @@ def test_get_all_executables_pathsep(path, pathsep):
 def test_get_all_executables_exclude_paths(path, pathsep, excluded, settings):
     settings.init()
     settings.excluded_search_path_prefixes = [excluded]
-    with patch('thefuck.utils.Path') as Path_mock:
+    with patch('thefuck.utils.os.scandir', side_effect=OSError) as scandir_mock:
         get_all_executables()
         path_list = path.split(pathsep)
-        assert call(path_list[-1]) not in Path_mock.mock_calls
-        assert all(call(p) in Path_mock.mock_calls for p in path_list[:-1])
+        assert call(path_list[-1]) not in scandir_mock.mock_calls
+        assert all(call(p) in scandir_mock.mock_calls for p in path_list[:-1])
 
 
 @pytest.mark.parametrize('args, result', [
@@ -238,7 +239,7 @@ class TestGetValidHistoryWithoutCurrent(object):
     @pytest.fixture(autouse=True)
     def reset_memoize(self, no_memoize):
         """`get_all_executables` is memoized globally, so a result cached by
-        another test would bypass the `Path` mock used by `bins` below.
+        another test would bypass the `os.scandir` mock used by `bins` below.
 
         """
 
@@ -264,13 +265,15 @@ class TestGetValidHistoryWithoutCurrent(object):
 
     @pytest.fixture(autouse=True)
     def bins(self, mocker):
-        callables = list()
+        entries = list()
         for name in ['diff', 'ls', 'café']:
-            bin_mock = mocker.Mock(name=name)
-            bin_mock.configure_mock(name=name, is_dir=lambda: False)
-            callables.append(bin_mock)
-        path_mock = mocker.Mock(iterdir=mocker.Mock(return_value=callables))
-        return mocker.patch('thefuck.utils.Path', return_value=path_mock)
+            entry = mocker.Mock(name=name)
+            entry.configure_mock(name=name, is_dir=lambda: False)
+            entries.append(entry)
+        scan = mocker.MagicMock()
+        scan.__enter__.side_effect = lambda: iter(entries)
+        scan.__iter__.side_effect = lambda: iter(entries)
+        return mocker.patch('thefuck.utils.os.scandir', return_value=scan)
 
     @pytest.mark.parametrize('script, result', [
         ('le cat', ['ls cat', 'diff x', u'café ô']),
